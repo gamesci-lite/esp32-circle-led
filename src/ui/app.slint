@@ -1,16 +1,239 @@
-// 最小 UI: 中心显示 "Hello, Circle!"
-// 第一阶段仅验证屏能点亮 + Slint 编译链路通
+// 复刻 Squareline Studio 的桌面风格:
+//   - 顶部状态栏 (WiFi 图标 + 电池图标 + 时间)
+//   - 中央 2x2 应用网格 (Squareline / Calculator / DrawPanel / AIChats)
+//   - 底部页码指示器 (3 圆点, 当前页高亮) + 拖拽条
+//   - 整体圆形裁剪 (圆形屏天然 clip)
+//
+// 颜色采样 (从用户提供的实拍图):
+//   - 状态栏底色: 半透明黑 #1a1a1a (透明度 0.6)
+//   - 应用图标圆角: 约 24px
+//   - 应用图标背景色:
+//       Squareline:  白底 #ffffff + 红色 logo #e63946
+//       Calculator:  蓝色 #4040ff + 白色符号
+//       DrawPanel:   橙色渐变 #ff8800
+//       AIChats:     蓝色 #2080ff + 白色机器人
+//   - 应用 label 颜色: 白色 #ffffff
+//   - 背景: 纯黑 #000000 (AMOLED 关像素不耗电)
 
+import { Button } from "std-widgets.slint";
+
+// 应用图标组件 (占位 - 后续用 Image 替换为 PNG)
+component AppIcon {
+    in property <string> label;
+    in property <color> background;
+    in property <color> foreground: #ffffff;
+    in property <string> icon-text: "?";
+    in property <bool> pressed;
+
+    width: 90px;
+    height: 90px;
+
+    Rectangle {
+        width: 90px;
+        height: 90px;
+        border-radius: 24px;
+        background: pressed ? root.foreground.darker(0.3) : root.background;
+
+        // 占位图标: 简单文字符号 (后续用 SVG/PNG 替换)
+        Text {
+            text: root.icon-text;
+            color: root.foreground;
+            font-size: 48px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            x: 0;
+            y: 0;
+            width: 90px;
+            height: 90px;
+        }
+    }
+
+    // 标签
+    Text {
+        text: root.label;
+        color: #ffffff;
+        font-size: 14px;
+        horizontal-alignment: center;
+        x: 0;
+        y: 96px;
+        width: 90px;
+        height: 20px;
+    }
+
+    // 点击区域 (整个图标 + 标签)
+    TouchArea {
+        width: 90px;
+        height: 116px;
+        clicked => { root.pressed = !root.pressed; }
+    }
+}
+
+// 顶部状态栏
+component StatusBar {
+    width: 466px;
+    height: 60px;
+
+    Rectangle {
+        background: #1a1a1a;
+        opacity: 0.85;
+        width: 466px;
+        height: 60px;
+
+        // WiFi 图标 (用 ▲ 三角形占位)
+        Text {
+            text: "📶";
+            color: #ffffff;
+            font-size: 18px;
+            x: 16px;
+            y: 18px;
+            width: 24px;
+            height: 24px;
+        }
+
+        // 电池图标 (用 ▮▮▯ 占位)
+        Text {
+            text: "🔋";
+            color: #ffffff;
+            font-size: 18px;
+            x: 50px;
+            y: 18px;
+            width: 24px;
+            height: 24px;
+        }
+
+        // 时间 (静态占位 "00:00")
+        Text {
+            text: "00:00";
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            x: 380px;
+            y: 18px;
+            width: 70px;
+            height: 24px;
+            horizontal-alignment: right;
+        }
+    }
+}
+
+// 底部页码指示器
+component PageIndicator {
+    in property <int> current-page: 0;
+    in property <int> total-pages: 3;
+
+    width: 466px;
+    height: 60px;
+
+    HorizontalLayout {
+        x: 0;
+        y: 8px;
+        width: 466px;
+        height: 16px;
+        spacing: 12px;
+        alignment: center;
+
+        Rectangle {
+            width: root.current-page == 0 ? 24px : 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: root.current-page == 0 ? #ffffff : #666666;
+        }
+        Rectangle {
+            width: root.current-page == 1 ? 24px : 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: root.current-page == 1 ? #ffffff : #666666;
+        }
+        Rectangle {
+            width: root.current-page == 2 ? 24px : 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: root.current-page == 2 ? #ffffff : #666666;
+        }
+    }
+
+    // 拖拽条 (底部小条状)
+    Rectangle {
+        x: 200px;
+        y: 40px;
+        width: 66px;
+        height: 4px;
+        border-radius: 2px;
+        background: #666666;
+    }
+}
+
+// 主窗口 - 复刻 Squareline 桌面
 export component App inherits Window {
     width: 466px;
     height: 466px;
-    background: #1a1a1a;
+    background: #000000;
+    title: "circle-led";
 
-    Text {
-        text: "Hello, Circle!";
-        color: #ffffff;
-        font-size: 24px;
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
+    in property <int> current-page: 0;
+
+    // 整体圆形裁剪 (clip-path 在 Slint 1.x 用 opacity mask 或 clip layer)
+    // 注: Slint 1.x 的 clip-path 支持有限, 这里依赖 AMOLED 屏物理圆形边缘
+    // 真正圆形 clip 需要在 SH8601 push_framebuffer 时做圆形 mask
+
+    // 顶部状态栏
+    StatusBar {}
+
+    // 中央 2x2 应用网格
+    GridLayout {
+        x: 60px;
+        y: 100px;
+        spacing: 36px;
+        width: 346px;
+        height: 230px;
+
+        Row {
+            AppIcon {
+                label: "Squareline";
+                background: #ffffff;
+                foreground: #e63946;
+                icon-text: "SL";
+            }
+            AppIcon {
+                label: "Calculator";
+                background: #4040ff;
+                foreground: #ffffff;
+                icon-text: "±×÷=";
+            }
+        }
+        Row {
+            AppIcon {
+                label: "DrawPanel";
+                background: linear-gradient(180deg, #ff8800, #ff4400);
+                foreground: #ffffff;
+                icon-text: "✎";
+            }
+            AppIcon {
+                label: "AIChats";
+                background: #2080ff;
+                foreground: #ffffff;
+                icon-text: "🤖";
+            }
+        }
+    }
+
+    // 底部页码 + 拖拽条
+    PageIndicator {
+        y: 380px;
+        current-page: root.current-page;
+    }
+
+    // 触摸切换页 (左半屏 / 右半屏点击)
+    TouchArea {
+        width: 466px;
+        height: 466px;
+
+        clicked => {
+            if (self.mouse-x < 233) {
+                root.current-page = root.current-page == 0 ? 2 : root.current-page - 1;
+            } else {
+                root.current-page = (root.current-page + 1) % 3;
+            }
+        }
     }
 }
