@@ -1,0 +1,42 @@
+[package]
+name = "esp32-circle-led"
+version = "0.1.0"
+authors = ["dwb"]
+edition = "2021"
+resolver = "2"
+rust-version = "1.82"
+
+[[bin]]
+name = "esp32-circle-led"
+harness = false
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug = true
+opt-level = "z"
+
+# 注: 曾有 [patch.crates-io] 把 esp-idf-* 指到 github master —— 已移除。
+# crates.io 官方版本 (sys 0.37.2 / hal 0.46.2 / svc 0.52.1) 原生支持 ESP-IDF v5.5.x，
+# 且构建机访问不了 github，git patch 只会让 cargo 挂死。
+
+[dependencies]
+log = "0.4"
+esp-idf-svc = { version = "0.52.1", features = ["critical-section"] }
+esp-idf-hal = { version = "0.46.2" }
+esp-idf-sys = { version = "0.37.2", features = ["binstart"] }
+
+# Slint UI: 声明式 + 编译期优化 + dirty region, 比 LVGL 效率高 20-50%
+# License: GPLv3 — 学习/研究 OK
+slint = "1"
+
+# PSRAM allocator — 466x466x2 = 434KB framebuffer 必须放 PSRAM
+esp-alloc = "0.6"
+
+# GT911 触摸 (I2C) — 备选 crate: abayomi185/gt911, jessebraham/tt21100
+# 第一阶段只点亮屏, 触摸先留 TODO
+
+[build-dependencies]
+embuild = "0.33"
+slint-build = "1"

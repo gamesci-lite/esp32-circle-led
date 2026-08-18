@@ -1,0 +1,16 @@
+// 最小 UI: 中心显示 "Hello, Circle!"
+// 第一阶段仅验证屏能点亮 + Slint 编译链路通
+
+export component App inherits Window {
+    width: 466px;
+    height: 466px;
+    background: #1a1a1a;
+
+    Text {
+        text: "Hello, Circle!";
+        color: #ffffff;
+        font-size: 24px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+    }
+}

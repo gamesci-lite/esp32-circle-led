@@ -1,0 +1,16 @@
+# 构建产物
+/target
+/.embuild
+/flash-artifacts/
+
+# 凭据 (从 .example 复制)
+/wifi_secrets.toml
+/_ai/credentials/
+
+# IDE
+/.idea/
+/.vscode/
+*.swp
+
+# macOS
+.DS_Store
