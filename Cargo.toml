@@ -11,11 +11,15 @@ name = "esp32-circle-led"
 harness = false
 
 [profile.release]
-opt-level = "s"
+opt-level = 1          # 降低优化 — LLVM opt-level=s/z 生成过于激进的 l32r 引用, 降为 1 避开
+lto = "off"
+codegen-units = 1
 
 [profile.dev]
 debug = true
 opt-level = "z"
+lto = "off"
+codegen-units = 1
 
 # 注: 曾有 [patch.crates-io] 把 esp-idf-* 指到 github master —— 已移除。
 # crates.io 官方版本 (sys 0.37.2 / hal 0.46.2 / svc 0.52.1) 原生支持 ESP-IDF v5.5.x，
@@ -23,13 +27,17 @@ opt-level = "z"
 
 [dependencies]
 log = "0.4"
-esp-idf-svc = { version = "0.52.1", features = ["critical-section"] }
+anyhow = "1"
+# 暂时去掉 esp-idf-svc — 它的复杂泛型异步原语 (Waitable/Unblocker/RawCstr) 触发 Xtensa nightly 的
+# l32r: misaligned literal target 链接错误. 改用 esp-idf-sys 直调 ESP-IDF C API + 手写最小 log.
+# esp-idf-svc = { version = "0.52.1", features = ["critical-section"] }
 esp-idf-hal = { version = "0.46.2" }
 esp-idf-sys = { version = "0.37.2", features = ["binstart"] }
 
-# Slint UI: 声明式 + 编译期优化 + dirty region, 比 LVGL 效率高 20-50%
-# License: GPLv3 — 学习/研究 OK
-slint = "1"
+# Slint UI: 暂时禁用 — memmap2 0.9.11 依赖 POSIX libc::* 常量, esp-idf musl 不兼容.
+# 等下一轮单独验证 Slint 在 ESP32-S3 上的嵌入式集成方案.
+# 参考: https://github.com/slint-ui/slint/issues/...
+# slint = { version = "1", default-features = false, features = ["std", "unsafe-single-threaded"] }
 
 # PSRAM allocator — 466x466x2 = 434KB framebuffer 必须放 PSRAM
 esp-alloc = "0.6"
@@ -39,4 +47,4 @@ esp-alloc = "0.6"
 
 [build-dependencies]
 embuild = "0.33"
-slint-build = "1"
+# slint-build = "1"

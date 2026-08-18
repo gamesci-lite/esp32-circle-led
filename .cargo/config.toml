@@ -1,9 +1,16 @@
+# ESP32-S3 编译配置 — 参考 esp-idf-svc 0.52.1 标准模板
+# https://github.com/esp-rs/esp-idf-svc/blob/master/.cargo/config.toml
+
 [build]
 target = "xtensa-esp32s3-espidf"
 
-[target.xtensa-esp32s3-espidf]
+[target.'cfg(target_os = "espidf")']
 linker = "ldproxy"
 runner = "espflash flash --monitor"
+rustflags = ["--cfg", "espidf_time64"]
 
 [unstable]
 build-std = ["std", "panic_abort"]
+
+[env]
+ESP_IDF_VERSION = "v5.5.3"

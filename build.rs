@@ -1,8 +1,8 @@
 fn main() {
     embuild::espidf::sysenv::output();
 
-    // Slint UI 编译: 把 src/ui/app.slint 生成 rust 代码
-    slint_build::compile("src/ui/app.slint").expect("Slint 编译失败 — 检查 src/ui/app.slint");
+    // Slint UI 编译: 暂时禁用 — 等屏验证通过后再迭代 Slint 集成.
+    // slint_build::compile("src/ui/app.slint").expect("Slint 编译失败 — 检查 src/ui/app.slint");
 
     // WiFi 凭据: 从 gitignore 的 wifi_secrets.toml 读取, 生成 consts 编入固件。
     // 文件不存在 → 空 SSID → 固件跳过 STA 直接 AP 回退模式。
