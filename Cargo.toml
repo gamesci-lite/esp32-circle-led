@@ -43,6 +43,10 @@ esp-idf-sys = { version = "0.37.2", features = ["binstart"] }
 # PSRAM allocator — 466x466x2 = 434KB framebuffer 必须放 PSRAM
 esp-alloc = "0.6"
 
+# GUI 渲染 (M1): 纯 Rust no_std, m5stamp 项目同工具链已验证可编
+embedded-graphics = "0.8"
+profont = "0.7"
+
 # GT911 触摸 (I2C) — 备选 crate: abayomi185/gt911, jessebraham/tt21100
 # 第一阶段只点亮屏, 触摸先留 TODO
 
@@ -56,3 +60,13 @@ embuild = "0.33"
 extra_components = [
     { component_dirs = ["vendor/esp_lcd_co5300"], bindings_header = "vendor/esp_lcd_co5300/include/esp_lcd_co5300.h" },
 ]
+
+# ── Feature 架构: 应用入口 feature 驱动 (见 docs/ROADMAP.md) ──
+# 裁剪示例: cargo build --release --no-default-features --features app-calculator
+[features]
+default = ["all-apps"]
+all-apps = ["app-squareline", "app-calculator", "app-drawpanel", "app-aichats"]
+app-squareline = []   # 关于/信息页
+app-calculator = []   # 计算器 (M4 实体化)
+app-drawpanel  = []   # 触摸画板 (M3 触摸前置)
+app-aichats    = []   # AI 对话 (M2 WiFi 前置)
