@@ -31,7 +31,8 @@ anyhow = "1"
 # 暂时去掉 esp-idf-svc — 它的复杂泛型异步原语 (Waitable/Unblocker/RawCstr) 触发 Xtensa nightly 的
 # l32r: misaligned literal target 链接错误. 改用 esp-idf-sys 直调 ESP-IDF C API + 手写最小 log.
 # esp-idf-svc = { version = "0.52.1", features = ["critical-section"] }
-esp-idf-hal = { version = "0.46.2" }
+# esp-idf-hal 也移除 (2026-08-19): 它 0.46.2 仍用 legacy I2C 驱动 (i2c_driver_install),
+# 与 CO5300 驱动用的新 I2C master (driver_ng) 冲突 → "CONFLICT! driver_ng" 运行期 abort.
 esp-idf-sys = { version = "0.37.2", features = ["binstart"] }
 
 # Slint UI: 暂时禁用 — memmap2 0.9.11 依赖 POSIX libc::* 常量, esp-idf musl 不兼容.
@@ -48,3 +49,10 @@ esp-alloc = "0.6"
 [build-dependencies]
 embuild = "0.33"
 # slint-build = "1"
+
+# CO5300 驱动复用 C 路线已点亮的乐鑫官方组件 (vendor 自 esp_lcd_co5300 v2.1.0)
+# esp-idf-sys 把它加进 IDF 构建并对 include/esp_lcd_co5300.h 生成 bindgen 绑定
+[package.metadata.esp-idf-sys]
+extra_components = [
+    { component_dirs = ["vendor/esp_lcd_co5300"], bindings_header = "vendor/esp_lcd_co5300/include/esp_lcd_co5300.h" },
+]

@@ -1,3 +1,6 @@
+# ⚠️ 必须用 esp-rs 分叉工具链 (espup 安装, 带 xtensa LLVM 补丁)
+# stock nightly 的 xtensa 后端有 l32r: misaligned literal target bug (2026-08-19 实测)
+# 构建机 ubuntu-hs-main 已装 "esp" 工具链 (基于 nightly 2026-04-15 + esp-rs 补丁, LLVM 21.1.3)
 [toolchain]
-channel = "nightly"
+channel = "esp"
 components = ["rust-src"]
